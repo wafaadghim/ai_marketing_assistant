@@ -1,8 +1,8 @@
 from odoo import models, fields, api
 import logging
 import psycopg2
-import json
 from psycopg2.extras import RealDictCursor
+import json
 
 _logger = logging.getLogger(__name__)
 
@@ -15,11 +15,12 @@ class AIMarketingService(models.Model):
     def _get_pg_connection(self):
         """Get PostgreSQL connection to ai_marketing database"""
         try:
+            # Utiliser les mêmes paramètres que le test de connexion
             connection = psycopg2.connect(
-                host="localhost",  # Ajustez selon votre configuration
+                host="localhost",
                 database="ai_marketing",
-                user="odoo",  # Remplacez par votre utilisateur PostgreSQL
-                password="odoo",  # Remplacez par votre mot de passe
+                user="odoo",  # Même utilisateur que dans le test
+                password="odoo",  # Même mot de passe que dans le test
                 port="5432"
             )
             return connection
@@ -49,19 +50,21 @@ class AIMarketingService(models.Model):
         try:
             message_lower = message.lower()
             
-            # Détection du type de question
-            if any(word in message_lower for word in ['campaign', 'campaigns', 'حملة', 'حملات']):
+            # Détection du type de question avec mots-clés français et anglais
+            if any(word in message_lower for word in ['campaign', 'campaigns', 'campagne', 'campagnes', 'حملة', 'حملات']):
                 return self._handle_campaign_question(message, language)
-            elif any(word in message_lower for word in ['roi', 'return', 'profit', 'عائد', 'ربح']):
+            elif any(word in message_lower for word in ['roi', 'return', 'profit', 'rentabilité', 'bénéfice', 'عائد', 'ربح']):
                 return self._handle_roi_question(message, language)
-            elif any(word in message_lower for word in ['conversion', 'convert', 'تحويل', 'تحويلات']):
+            elif any(word in message_lower for word in ['conversion', 'convert', 'conversions', 'تحويل', 'تحويلات']):
                 return self._handle_conversion_question(message, language)
-            elif any(word in message_lower for word in ['performance', 'أداء', 'نتائج']):
+            elif any(word in message_lower for word in ['performance', 'performances', 'résultats', 'أداء', 'نتائج']):
                 return self._handle_performance_question(message, language)
-            elif any(word in message_lower for word in ['budget', 'cost', 'ميزانية', 'تكلفة']):
+            elif any(word in message_lower for word in ['budget', 'cost', 'coût', 'coûts', 'ميزانية', 'تكلفة']):
                 return self._handle_budget_question(message, language)
-            elif any(word in message_lower for word in ['hello', 'hi', 'مرحبا', 'أهلا']):
+            elif any(word in message_lower for word in ['hello', 'hi', 'bonjour', 'salut', 'مرحبا', 'أهلا']):
                 return self._get_greeting_with_stats(language)
+            elif any(word in message_lower for word in ['help', 'aide', 'أساعدك', 'مساعدة']):
+                return self._get_help_message(language)
             else:
                 return self._handle_general_question(message, language)
                 
@@ -70,8 +73,7 @@ class AIMarketingService(models.Model):
             return self._get_error_response(language)
 
     def _handle_campaign_question(self, message, language):
-        """Handle campaign-related questions"""
-        # Récupérer les données des campagnes
+        """Handle campaign-related questions with real data"""
         query = """
             SELECT name, cost, revenue, conversions, status, 
                    CASE WHEN cost > 0 THEN ((revenue - cost) / cost) * 100 ELSE 0 END as roi
@@ -82,37 +84,52 @@ class AIMarketingService(models.Model):
         
         campaigns = self._query_marketing_data(query)
         if not campaigns:
-            return "No campaign data available." if language == 'en' else "لا توجد بيانات حملات متاحة."
+            return {
+                'en': "I couldn't find campaign data in the database. Please check if data exists.",
+                'fr': "Je n'ai pas trouvé de données de campagne dans la base. Vérifiez si des données existent.",
+                'ar': "لم أتمكن من العثور على بيانات حملات في قاعدة البيانات."
+            }.get(language, "No campaign data available.")
         
-        if language == 'en':
-            response = f"📊 Here are your top campaigns:\n\n"
-            for camp in campaigns:
-                response += f"• {camp['name']}: ROI {camp['roi']:.1f}%, Revenue ${camp['revenue']:,.0f}\n"
+        if language == 'fr':
+            response = f"📊 Voici vos meilleures campagnes :\n\n"
+            for i, camp in enumerate(campaigns, 1):
+                response += f"{i}. {camp['name']}\n"
+                response += f"   💰 ROI: {camp['roi']:.1f}%\n"
+                response += f"   💵 Revenus: ${camp['revenue']:,.0f}\n"
+                response += f"   🎯 Conversions: {camp['conversions']}\n"
+                response += f"   📊 Statut: {camp['status']}\n\n"
             
-            # Ajouter des insights
             best_campaign = campaigns[0]
-            response += f"\n🏆 Best performer: {best_campaign['name']} with {best_campaign['roi']:.1f}% ROI!"
+            response += f"🏆 Meilleure performance : {best_campaign['name']} avec {best_campaign['roi']:.1f}% de ROI !"
+        
+        elif language == 'en':
+            response = f"📊 Here are your top campaigns:\n\n"
+            for i, camp in enumerate(campaigns, 1):
+                response += f"{i}. {camp['name']}\n"
+                response += f"   💰 ROI: {camp['roi']:.1f}%\n"
+                response += f"   💵 Revenue: ${camp['revenue']:,.0f}\n"
+                response += f"   🎯 Conversions: {camp['conversions']}\n"
+                response += f"   📊 Status: {camp['status']}\n\n"
             
-            if len(campaigns) > 1:
-                avg_roi = sum(c['roi'] for c in campaigns) / len(campaigns)
-                response += f"\n📈 Average ROI across top campaigns: {avg_roi:.1f}%"
+            best_campaign = campaigns[0]
+            response += f"🏆 Best performer: {best_campaign['name']} with {best_campaign['roi']:.1f}% ROI!"
         
         else:  # Arabic
             response = f"📊 إليك أفضل حملاتك:\n\n"
-            for camp in campaigns:
-                response += f"• {camp['name']}: عائد استثمار {camp['roi']:.1f}%، إيرادات ${camp['revenue']:,.0f}\n"
+            for i, camp in enumerate(campaigns, 1):
+                response += f"{i}. {camp['name']}\n"
+                response += f"   💰 عائد استثمار: {camp['roi']:.1f}%\n"
+                response += f"   💵 إيرادات: ${camp['revenue']:,.0f}\n"
+                response += f"   🎯 تحويلات: {camp['conversions']}\n"
+                response += f"   📊 حالة: {camp['status']}\n\n"
             
             best_campaign = campaigns[0]
-            response += f"\n🏆 الأفضل أداءً: {best_campaign['name']} بعائد استثمار {best_campaign['roi']:.1f}%!"
-            
-            if len(campaigns) > 1:
-                avg_roi = sum(c['roi'] for c in campaigns) / len(campaigns)
-                response += f"\n📈 متوسط عائد الاستثمار للحملات الأفضل: {avg_roi:.1f}%"
+            response += f"🏆 الأفضل أداءً: {best_campaign['name']} بعائد استثمار {best_campaign['roi']:.1f}%!"
         
         return response
 
     def _handle_roi_question(self, message, language):
-        """Handle ROI-related questions"""
+        """Handle ROI questions with real data"""
         query = """
             SELECT 
                 AVG(CASE WHEN cost > 0 THEN ((revenue - cost) / cost) * 100 ELSE 0 END) as avg_roi,
@@ -122,50 +139,51 @@ class AIMarketingService(models.Model):
                 SUM(revenue) as total_revenue,
                 SUM(cost) as total_cost
             FROM marketing_data 
-            WHERE status = 'active'
+            WHERE status IN ('active', 'completed')
         """
         
         data = self._query_marketing_data(query)
         if not data or not data[0]:
-            return "No ROI data available." if language == 'en' else "لا توجد بيانات عائد استثمار متاحة."
+            return {
+                'en': "No ROI data available in the database.",
+                'fr': "Aucune donnée de ROI disponible dans la base.",
+                'ar': "لا توجد بيانات عائد استثمار متاحة."
+            }.get(language, "No ROI data available.")
         
         stats = data[0]
+        overall_roi = ((stats['total_revenue'] - stats['total_cost']) / stats['total_cost']) * 100 if stats['total_cost'] > 0 else 0
         
-        if language == 'en':
+        if language == 'fr':
+            response = f"💰 Analyse du ROI :\n\n"
+            response += f"📊 ROI moyen: {stats['avg_roi']:.1f}%\n"
+            response += f"🎯 Campagnes rentables: {stats['profitable_campaigns']}/{stats['total_campaigns']}\n"
+            response += f"🏆 Meilleur ROI: {stats['best_roi']:.1f}%\n"
+            response += f"💵 Revenus totaux: ${stats['total_revenue']:,.0f}\n"
+            response += f"💸 Coûts totaux: ${stats['total_cost']:,.0f}\n"
+            response += f"📈 ROI global: {overall_roi:.1f}%\n\n"
+            
+            if overall_roi > 100:
+                response += "✅ Excellent ! Vos campagnes sont très rentables."
+            elif overall_roi > 50:
+                response += "👍 Bonne performance ! Considérez étendre les campagnes réussies."
+            else:
+                response += "⚠️ Le ROI pourrait être amélioré. Révisez le ciblage et les budgets."
+        
+        elif language == 'en':
             response = f"💰 ROI Analysis:\n\n"
             response += f"📊 Average ROI: {stats['avg_roi']:.1f}%\n"
             response += f"🎯 Profitable campaigns: {stats['profitable_campaigns']}/{stats['total_campaigns']}\n"
             response += f"🏆 Best ROI: {stats['best_roi']:.1f}%\n"
             response += f"💵 Total revenue: ${stats['total_revenue']:,.0f}\n"
-            response += f"💸 Total cost: ${stats['total_cost']:,.0f}\n\n"
-            
-            overall_roi = ((stats['total_revenue'] - stats['total_cost']) / stats['total_cost']) * 100
-            response += f"📈 Overall ROI: {overall_roi:.1f}%"
+            response += f"💸 Total cost: ${stats['total_cost']:,.0f}\n"
+            response += f"📈 Overall ROI: {overall_roi:.1f}%\n\n"
             
             if overall_roi > 100:
-                response += "\n✅ Excellent! Your campaigns are highly profitable."
+                response += "✅ Excellent! Your campaigns are highly profitable."
             elif overall_roi > 50:
-                response += "\n👍 Good performance! Consider scaling successful campaigns."
+                response += "👍 Good performance! Consider scaling successful campaigns."
             else:
-                response += "\n⚠️ ROI could be improved. Review targeting and budgets."
-        
-        else:  # Arabic
-            response = f"💰 تحليل عائد الاستثمار:\n\n"
-            response += f"📊 متوسط عائد الاستثمار: {stats['avg_roi']:.1f}%\n"
-            response += f"🎯 حملات مربحة: {stats['profitable_campaigns']}/{stats['total_campaigns']}\n"
-            response += f"🏆 أفضل عائد استثمار: {stats['best_roi']:.1f}%\n"
-            response += f"💵 إجمالي الإيرادات: ${stats['total_revenue']:,.0f}\n"
-            response += f"💸 إجمالي التكاليف: ${stats['total_cost']:,.0f}\n\n"
-            
-            overall_roi = ((stats['total_revenue'] - stats['total_cost']) / stats['total_cost']) * 100
-            response += f"📈 عائد الاستثمار الإجمالي: {overall_roi:.1f}%"
-            
-            if overall_roi > 100:
-                response += "\n✅ ممتاز! حملاتك مربحة جداً."
-            elif overall_roi > 50:
-                response += "\n👍 أداء جيد! فكر في توسيع الحملات الناجحة."
-            else:
-                response += "\n⚠️ يمكن تحسين عائد الاستثمار. راجع الاستهداف والميزانيات."
+                response += "⚠️ ROI could be improved. Review targeting and budgets."
         
         return response
 
@@ -301,60 +319,108 @@ class AIMarketingService(models.Model):
         return response
 
     def _get_greeting_with_stats(self, language):
-        """Get greeting with current stats"""
+        """Get greeting with current stats from real data"""
         query = """
             SELECT 
                 COUNT(*) as total_campaigns,
                 COUNT(CASE WHEN status = 'active' THEN 1 END) as active_campaigns,
                 SUM(revenue) as total_revenue,
-                SUM(conversions) as total_conversions
+                SUM(conversions) as total_conversions,
+                AVG(CASE WHEN cost > 0 THEN ((revenue - cost) / cost) * 100 ELSE 0 END) as avg_roi
             FROM marketing_data
         """
         
         data = self._query_marketing_data(query)
         
-        if language == 'en':
-            greeting = "Hello! I'm your AI Marketing Assistant. 👋\n\n"
-            if data and data[0]:
-                stats = data[0]
-                greeting += f"📊 Quick Overview:\n"
-                greeting += f"• {stats['active_campaigns']}/{stats['total_campaigns']} campaigns active\n"
-                greeting += f"• ${stats['total_revenue']:,.0f} total revenue\n"
-                greeting += f"• {stats['total_conversions']:,} total conversions\n\n"
-            greeting += "What would you like to know about your marketing performance?"
+        greetings = {
+            'fr': {
+                'hello': "Bonjour ! Je suis votre assistant marketing IA. 👋\n\n",
+                'overview': "📊 Aperçu rapide :\n",
+                'campaigns': "• {active}/{total} campagnes actives\n",
+                'revenue': "• ${revenue:,.0f} revenus totaux\n", 
+                'conversions': "• {conversions:,} conversions totales\n",
+                'roi': "• {roi:.1f}% ROI moyen\n\n",
+                'question': "Que souhaitez-vous savoir sur vos performances marketing ?"
+            },
+            'en': {
+                'hello': "Hello! I'm your AI Marketing Assistant. 👋\n\n",
+                'overview': "📊 Quick Overview:\n",
+                'campaigns': "• {active}/{total} campaigns active\n",
+                'revenue': "• ${revenue:,.0f} total revenue\n",
+                'conversions': "• {conversions:,} total conversions\n", 
+                'roi': "• {roi:.1f}% average ROI\n\n",
+                'question': "What would you like to know about your marketing performance?"
+            },
+            'ar': {
+                'hello': "مرحباً! أنا مساعد التسويق الذكي. 👋\n\n",
+                'overview': "📊 نظرة سريعة:\n",
+                'campaigns': "• {active}/{total} حملة نشطة\n",
+                'revenue': "• ${revenue:,.0f} إجمالي الإيرادات\n",
+                'conversions': "• {conversions:,} إجمالي التحويلات\n",
+                'roi': "• {roi:.1f}% متوسط عائد الاستثمار\n\n", 
+                'question': "ماذا تود أن تعرف عن أداء التسويق الخاص بك؟"
+            }
+        }
         
-        else:  # Arabic
-            greeting = "مرحباً! أنا مساعد التسويق الذكي. 👋\n\n"
-            if data and data[0]:
-                stats = data[0]
-                greeting += f"📊 نظرة سريعة:\n"
-                greeting += f"• {stats['active_campaigns']}/{stats['total_campaigns']} حملة نشطة\n"
-                greeting += f"• ${stats['total_revenue']:,.0f} إجمالي الإيرادات\n"
-                greeting += f"• {stats['total_conversions']:,} إجمالي التحويلات\n\n"
-            greeting += "ماذا تود أن تعرف عن أداء التسويق الخاص بك؟"
+        lang_text = greetings.get(language, greetings['en'])
+        greeting = lang_text['hello']
         
+        if data and data[0] and data[0]['total_campaigns'] > 0:
+            stats = data[0]
+            greeting += lang_text['overview']
+            greeting += lang_text['campaigns'].format(
+                active=stats['active_campaigns'],
+                total=stats['total_campaigns']
+            )
+            greeting += lang_text['revenue'].format(revenue=stats['total_revenue'] or 0)
+            greeting += lang_text['conversions'].format(conversions=stats['total_conversions'] or 0)
+            greeting += lang_text['roi'].format(roi=stats['avg_roi'] or 0)
+        
+        greeting += lang_text['question']
         return greeting
+
+    def _get_help_message(self, language):
+        """Get help message"""
+        help_messages = {
+            'fr': (
+                "Je peux vous aider avec :\n"
+                "• 📊 Analyse des performances de campagne\n"
+                "• 💰 Calculs et insights ROI\n" 
+                "• 🎯 Optimisation du taux de conversion\n"
+                "• 💵 Recommandations d'allocation budgétaire\n\n"
+                "Essayez de demander sur vos campagnes, ROI, conversions, ou performances !"
+            ),
+            'en': (
+                "I can help you with:\n"
+                "• 📊 Campaign performance analysis\n"
+                "• 💰 ROI calculations and insights\n"
+                "• 🎯 Conversion rate optimization\n" 
+                "• 💵 Budget allocation recommendations\n\n"
+                "Try asking about your campaigns, ROI, conversions, or performance!"
+            ),
+            'ar': (
+                "يمكنني مساعدتك في:\n"
+                "• 📊 تحليل أداء الحملات\n"
+                "• 💰 حسابات ورؤى عائد الاستثمار\n"
+                "• 🎯 تحسين معدل التحويل\n"
+                "• 💵 توصيات توزيع الميزانية\n\n"
+                "جرب السؤال عن حملاتك أو عائد الاستثمار أو التحويلات أو الأداء!"
+            )
+        }
+        return help_messages.get(language, help_messages['en'])
 
     def _handle_general_question(self, message, language):
         """Handle general questions"""
-        if language == 'en':
-            return ("I can help you with:\n"
-                   "• Campaign performance analysis\n"
-                   "• ROI calculations and insights\n"
-                   "• Conversion rate optimization\n"
-                   "• Budget allocation recommendations\n\n"
-                   "Try asking about your campaigns, ROI, conversions, or performance!")
-        else:
-            return ("يمكنني مساعدتك في:\n"
-                   "• تحليل أداء الحملات\n"
-                   "• حسابات ورؤى عائد الاستثمار\n"
-                   "• تحسين معدل التحويل\n"
-                   "• توصيات توزيع الميزانية\n\n"
-                   "جرب السؤال عن حملاتك أو عائد الاستثمار أو التحويلات أو الأداء!")
+        return self._get_help_message(language)
 
     def _get_error_response(self, language):
         """Get error response"""
-        if language == 'en':
-            return "I apologize, but I'm having trouble accessing the data right now. Please try again later."
-        else:
-            return "أعتذر، ولكنني أواجه مشكلة في الوصول للبيانات حالياً. يرجى المحاولة لاحقاً."
+        error_messages = {
+            'fr': "Désolé, j'ai des difficultés à accéder aux données. Veuillez réessayer plus tard.",
+            'en': "I apologize, but I'm having trouble accessing the data right now. Please try again later.",
+            'ar': "أعتذر، ولكنني أواجه مشكلة في الوصول للبيانات حالياً. يرجى المحاولة لاحقاً."
+        }
+        return error_messages.get(language, error_messages['en'])
+
+    # Ajouter les autres méthodes (_handle_conversion_question, _handle_performance_question, _handle_budget_question)
+    # similaires avec les vraies données de la base ai_marketing

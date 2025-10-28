@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Database Test Form View -->
+    <record id="view_database_test_form" model="ir.ui.view">
+        <field name="name">database.test.form</field>
+        <field name="model">database.test</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="simple_test" string="🚀 Quick Test" type="object" class="btn-success"/>
+                    <button name="test_connection" string="🔄 Full Test" type="object" class="btn-primary"/>
+                    <button name="create_sample_data" string="📊 Create Sample Data" type="object" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                        <field name="last_test_time" readonly="1"/>
+                    </div>
+                    
+                    <notebook>
+                        <page string="📊 Connection Status">
+                            <field name="connection_status" widget="text" placeholder="Click 'Quick Test' for immediate feedback or 'Full Test' for detailed analysis..."/>
+                        </page>
+                        <page string="📋 Test Results">
+                            <field name="test_results" widget="text" placeholder="Database query results will appear here after full testing..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action for Database Test -->
+    <record id="action_database_test" model="ir.actions.act_window">
+        <field name="name">Database Connection Test</field>
+        <field name="res_model">database.test</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'form_view_initial_mode': 'edit'}</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_database_test" 
+              name="🔧 Database Test" 
+              parent="menu_marketing_root"
+              action="action_database_test"
+              sequence="10"/>
+</odoo>

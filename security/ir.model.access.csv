@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_marketing_data,marketing.data,model_marketing_data,base.group_user,1,1,1,1
 access_ai_marketing_service,ai.marketing.service,model_ai_marketing_service,base.group_user,1,1,1,1
+access_database_test,database.test,model_database_test,base.group_user,1,1,1,1
