@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Template pour les assets backend - version corrigée -->
+    <template id="assets_backend" name="ai_marketing_assistant_assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" href="/ai_marketing_assistant/static/src/css/ai_assistant.css"/>
+            <script type="text/javascript" src="/ai_marketing_assistant/static/src/js/ai_assistant.js"></script>
+            <script type="text/javascript" src="/ai_marketing_assistant/static/src/js/chat_widget.js"></script>
+        </xpath>
+    </template>
+</odoo>

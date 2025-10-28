@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="ai_marketing_assistant.ChatWidget">
+        <div class="o_chat_widget" t-att-class="{'o_chat_open': widget.isOpen}">
+            <div class="o_chat_header">
+                <h4>🤖 Marketing AI Assistant</h4>
+                <span class="o_chat_toggle">
+                    <t t-if="!widget.isOpen">↑</t>
+                    <t t-if="widget.isOpen">↓</t>
+                </span>
+            </div>
+            <div class="o_chat_messages"></div>
+            <div class="o_chat_input_container">
+                <input type="text" class="o_chat_input" placeholder="Ask about campaign performance..."/>
+                <button class="btn btn-primary o_chat_send mt-2">Send</button>
+            </div>
+        </div>
+    </t>
+</templates>

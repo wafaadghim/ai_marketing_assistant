@@ -1,0 +1,22 @@
+ai_marketing_assistant/
+├── __manifest__.py
+├── models/
+│   ├── __init__.py
+│   ├── marketing_data.py
+│   └── ai_service.py
+├── controllers/
+│   ├── __init__.py
+│   └── chat_controller.py
+├── static/
+│   └── src/
+│       ├── css/
+│       │   └── marketing_chat.css
+│       ├── js/
+│       │   └── marketing_chat.js
+│       └── xml/
+│           └── marketing_chat_templates.xml
+├── views/
+│   ├── marketing_data_views.xml
+│   └── assets.xml
+└── security/
+    └── ir.model.access.csv

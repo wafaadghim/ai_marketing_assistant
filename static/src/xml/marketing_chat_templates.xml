@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="ai_marketing_assistant.ChatBubble" owl="1">
+        <div class="marketing-chat-container">
+            <!-- Chat Bubble Button -->
+            <div t-if="!state.isOpen" 
+                 class="marketing-chat-bubble" 
+                 t-on-click="toggleChat">
+                <i class="fa fa-comments"></i>
+            </div>
+
+            <!-- Chat Window -->
+            <div t-if="state.isOpen" class="marketing-chat-window">
+                <!-- Header -->
+                <div class="chat-header">
+                    <h4 t-esc="t.title"></h4>
+                    <div class="chat-controls">
+                        <button class="lang-btn" t-on-click="toggleLanguage">
+                            <span t-if="state.currentLanguage === 'en'">عر</span>
+                            <span t-else="">EN</span>
+                        </button>
+                        <button class="close-btn" t-on-click="closeChat">✕</button>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="chat-messages">
+                    <div t-foreach="state.messages" t-as="message" t-key="message_index"
+                         t-attf-class="message {{message.isBot ? 'bot-message' : 'user-message'}}">
+                        <div class="message-bubble">
+                            <p t-esc="message.text"></p>
+                            <span class="message-time" t-esc="formatTime(message.timestamp)"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Typing indicator -->
+                    <div t-if="state.isTyping" class="message bot-message">
+                        <div class="message-bubble typing-indicator">
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                            <span class="dot"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input -->
+                <div class="chat-input-area">
+                    <input type="text" 
+                           class="chat-input"
+                           t-model="state.inputValue"
+                           t-att-placeholder="t.placeholder"
+                           t-on-keypress="onKeyPress"/>
+                    <button class="send-btn" t-on-click="sendMessage">
+                        <i class="fa fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

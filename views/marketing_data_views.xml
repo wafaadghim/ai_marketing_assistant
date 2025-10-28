@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Marketing Data List View -->
+    <record id="view_marketing_data_list" model="ir.ui.view">
+        <field name="name">marketing.data.list</field>
+        <field name="model">marketing.data</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="channel_id"/>
+                <field name="cost"/>
+                <field name="revenue"/>
+                <field name="conversions"/>
+                <field name="conversion_rate"/>
+                <field name="roi"/>
+                <field name="status"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Marketing Data Form View -->
+    <record id="view_marketing_data_form" model="ir.ui.view">
+        <field name="name">marketing.data.form</field>
+        <field name="model">marketing.data</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="channel_id"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="cost"/>
+                            <field name="revenue"/>
+                            <field name="conversions"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="conversion_rate" readonly="1"/>
+                            <field name="roi" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Marketing Data Search View -->
+    <record id="view_marketing_data_search" model="ir.ui.view">
+        <field name="name">marketing.data.search</field>
+        <field name="model">marketing.data</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="channel_id"/>
+                <filter string="Active" name="active" domain="[('status', '=', 'active')]"/>
+                <filter string="High Performance" name="high_performance" domain="[('conversions', '&gt;', 10)]"/>
+                <filter string="Low Cost" name="low_cost" domain="[('cost', '&lt;', 1000)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Channel" name="channel" context="{'group_by': 'channel_id'}"/>
+                    <filter string="Status" name="status" context="{'group_by': 'status'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action for Marketing Data -->
+    <record id="action_marketing_data" model="ir.actions.act_window">
+        <field name="name">Marketing Data</field>
+        <field name="res_model">marketing.data</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <!-- Root Menu -->
+    <menuitem id="menu_marketing_root" 
+              name="Marketing Assistant" 
+              sequence="10"/>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_marketing_data" 
+              name="Marketing Data" 
+              parent="menu_marketing_root"
+              action="action_marketing_data"
+              sequence="5"/>
+</odoo>

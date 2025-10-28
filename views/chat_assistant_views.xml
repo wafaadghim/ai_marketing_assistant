@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_chat_assistant_list" model="ir.ui.view">
+        <field name="name">chat.assistant.list</field>
+        <field name="model">chat.assistant</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="session_date"/>
+                <field name="user_input"/>
+                <field name="ai_response"/>
+                <field name="user_id"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_chat_assistant" model="ir.actions.act_window">
+        <field name="name">Chat Sessions</field>
+        <field name="res_model">chat.assistant</field>
+        <field name="view_mode">list</field>
+    </record>
+
+    <!-- Menu enfant sous notre menu racine -->
+    <menuitem id="menu_chat_assistant"
+              name="Chat Sessions"
+              parent="menu_ai_marketing_root"
+              action="action_chat_assistant"
+              sequence="15"/>
+</odoo>

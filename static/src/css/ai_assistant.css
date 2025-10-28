@@ -1,0 +1,15 @@
+/* AI Marketing Assistant CSS */
+.o_ai_recommendation_high {
+    border-left: 4px solid #dc3545;
+    padding-left: 8px;
+}
+
+.o_ai_recommendation_medium {
+    border-left: 4px solid #ffc107;
+    padding-left: 8px;
+}
+
+.o_ai_recommendation_low {
+    border-left: 4px solid #28a745;
+    padding-left: 8px;
+}

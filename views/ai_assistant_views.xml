@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ai_assistant_list" model="ir.ui.view">
+        <field name="name">ai.assistant.list</field>
+        <field name="model">ai.assistant</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="recommendation_type"/>
+                <field name="campaign_id"/>
+                <field name="priority"/>
+                <field name="impact_score"/>
+                <field name="status"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_ai_assistant_form" model="ir.ui.view">
+        <field name="name">ai.assistant.form</field>
+        <field name="model">ai.assistant</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="recommendation_type"/>
+                            <field name="campaign_id"/>
+                            <field name="priority"/>
+                        </group>
+                        <group>
+                            <field name="impact_score"/>
+                            <field name="status"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="reason" widget="text" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ai_assistant" model="ir.actions.act_window">
+        <field name="name">AI Recommendations</field>
+        <field name="res_model">ai.assistant</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Menu enfant sous notre menu racine -->
+    <menuitem id="menu_ai_assistant"
+              name="AI Recommendations"
+              parent="menu_ai_marketing_root"
+              action="action_ai_assistant"
+              sequence="10"/>
+</odoo>

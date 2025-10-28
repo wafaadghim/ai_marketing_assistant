@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_marketing_dashboard" model="ir.ui.view">
+        <field name="name">marketing.dashboard</field>
+        <field name="model">marketing.data</field>
+        <field name="arch" type="xml">
+            <dashboard>
+                <view type="grid">
+                    <group>
+                        <group string="Performance Overview">
+                            <div class="row mt16">
+                                <div class="col-3">
+                                    <field name="cost" string="Total Cost" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                </div>
+                                <div class="col-3">
+                                    <field name="revenue" string="Total Revenue" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                </div>
+                                <div class="col-3">
+                                    <field name="conversions" string="Total Conversions" widget="integer"/>
+                                </div>
+                                <div class="col-3">
+                                    <field name="roi" string="Average ROI" widget="percentage"/>
+                                </div>
+                            </div>
+                        </group>
+                    </group>
+                </view>
+            </dashboard>
+        </field>
+    </record>
+</odoo>
