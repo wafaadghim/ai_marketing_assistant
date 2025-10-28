@@ -308,7 +308,7 @@ class DatabaseTest(models.TransientModel):
             connection = psycopg2.connect(**connection_params)
             cursor = connection.cursor()
             
-            # Créer la table si elle n'existe pas
+            # 1. Créer la table si elle n'existe pas
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS marketing_data (
                     id SERIAL PRIMARY KEY,
@@ -317,44 +317,78 @@ class DatabaseTest(models.TransientModel):
                     revenue DECIMAL(10,2) DEFAULT 0,
                     conversions INTEGER DEFAULT 0,
                     status VARCHAR(50) DEFAULT 'active',
-                    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    channel VARCHAR(100),
+                    campaign_type VARCHAR(100)
                 );
             """)
             
-            # Insérer des données d'exemple
-            sample_data = [
-                ('Google Ads Campaign 1', 1000.00, 2500.00, 25, 'active'),
-                ('Facebook Campaign', 800.00, 1800.00, 18, 'active'),
-                ('Instagram Ads', 600.00, 1200.00, 12, 'paused'),
-                ('LinkedIn Campaign', 1200.00, 3000.00, 30, 'active'),
-                ('Twitter Promotion', 400.00, 600.00, 6, 'completed'),
-                ('Email Marketing', 300.00, 900.00, 15, 'active'),
-                ('YouTube Ads', 1500.00, 4200.00, 42, 'active'),
-                ('TikTok Campaign', 500.00, 850.00, 8, 'paused'),
-                ('Pinterest Ads', 250.00, 400.00, 4, 'completed'),
-                ('Reddit Marketing', 150.00, 300.00, 3, 'active')
+            # 2. Vider la table existante (optionnel)
+            cursor.execute("DELETE FROM marketing_data;")
+            
+            # 3. Insérer des données d'exemple réalistes
+            sample_campaigns = [
+                ('Google Ads - Electronics', 2500.00, 8500.00, 85, 'active', 'Google Ads', 'Search'),
+                ('Facebook Campaign - Fashion', 1800.00, 5400.00, 54, 'active', 'Facebook', 'Social Media'),
+                ('Instagram Influencers', 3200.00, 9600.00, 96, 'active', 'Instagram', 'Influencer'),
+                ('LinkedIn B2B Campaign', 4500.00, 13500.00, 135, 'active', 'LinkedIn', 'B2B'),
+                ('YouTube Pre-roll Ads', 2200.00, 6600.00, 66, 'paused', 'YouTube', 'Video'),
+                ('Email Marketing - Newsletter', 500.00, 2000.00, 100, 'active', 'Email', 'Newsletter'),
+                ('TikTok Brand Campaign', 1500.00, 3000.00, 30, 'paused', 'TikTok', 'Social Media'),
+                ('Pinterest Shopping Ads', 800.00, 2400.00, 48, 'active', 'Pinterest', 'Shopping'),
+                ('Twitter Promoted Tweets', 1200.00, 2400.00, 24, 'completed', 'Twitter', 'Social Media'),
+                ('Snapchat Stories Ads', 900.00, 1800.00, 18, 'completed', 'Snapchat', 'Stories'),
+                ('Amazon PPC Campaign', 3500.00, 10500.00, 105, 'active', 'Amazon', 'PPC'),
+                ('Reddit Community Marketing', 600.00, 1200.00, 12, 'active', 'Reddit', 'Community'),
+                ('WhatsApp Business Ads', 750.00, 2250.00, 45, 'active', 'WhatsApp', 'Messaging'),
+                ('Telegram Channel Promotion', 400.00, 800.00, 8, 'paused', 'Telegram', 'Messaging'),
+                ('Google Shopping Campaign', 2800.00, 8400.00, 84, 'active', 'Google Shopping', 'E-commerce'),
+                ('Microsoft Ads - Bing', 1600.00, 4800.00, 48, 'active', 'Bing', 'Search'),
+                ('Spotify Audio Ads', 1100.00, 2200.00, 22, 'completed', 'Spotify', 'Audio'),
+                ('Twitch Gaming Campaign', 1300.00, 2600.00, 26, 'paused', 'Twitch', 'Gaming'),
+                ('Discord Community Ads', 500.00, 1000.00, 10, 'active', 'Discord', 'Gaming'),
+                ('Clubhouse Audio Campaign', 700.00, 1400.00, 14, 'completed', 'Clubhouse', 'Audio')
             ]
             
+            # Insérer les données avec la nouvelle structure
             cursor.executemany("""
-                INSERT INTO marketing_data (name, cost, revenue, conversions, status) 
-                VALUES (%s, %s, %s, %s, %s)
-                ON CONFLICT DO NOTHING;
-            """, sample_data)
+                INSERT INTO marketing_data (name, cost, revenue, conversions, status, channel, campaign_type) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, sample_campaigns)
             
             connection.commit()
+            
+            # 4. Vérifier les données insérées
+            cursor.execute("SELECT COUNT(*) FROM marketing_data;")
+            count = cursor.fetchone()[0]
+            
             cursor.close()
             connection.close()
             
+            self.connection_status = f"✅ Sample data created successfully!\n\n📊 Statistics:\n• {count} campaigns created\n• Mix of active, paused, and completed campaigns\n• Various channels: Google, Facebook, Instagram, etc.\n• Realistic cost, revenue, and conversion data\n\nYou can now test the chatbot with real data!"
+            
             return {
-                'success': True,
-                'message': f'Sample data created successfully! {len(sample_data)} campaigns added.'
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Success!',
+                    'message': f'Created {count} sample campaigns in ai_marketing database!',
+                    'type': 'success'
+                }
             }
             
         except Exception as e:
+            error_msg = f"❌ Error creating sample data: {str(e)}"
+            self.connection_status = error_msg
+            
             return {
-                'success': False,
-                'error': str(e),
-                'message': 'Failed to create sample data.'
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Error',
+                    'message': f'Failed to create sample data: {str(e)}',
+                    'type': 'danger'
+                }
             }
     
     def simple_test(self):
@@ -394,6 +428,74 @@ class DatabaseTest(models.TransientModel):
                 'params': {
                     'title': 'Connection Failed',
                     'message': f'Error: {str(e)[:100]}...',
+                    'type': 'danger'
+                }
+            }
+    
+    def populate_database(self):
+        """Remplit la base de données avec des campagnes aléatoires pour test"""
+        try:
+            connection_params = {
+                'host': 'localhost',
+                'database': 'ai_marketing',
+                'user': 'odoo',
+                'password': 'odoo',
+                'port': '5432'
+            }
+            
+            connection = psycopg2.connect(**connection_params)
+            cursor = connection.cursor()
+            
+            # Données pour générer des campagnes aléatoires
+            channels = ['Google Ads', 'Facebook', 'Instagram', 'LinkedIn', 'YouTube', 'Email', 'TikTok', 'Pinterest']
+            types = ['Search', 'Display', 'Video', 'Social', 'Email', 'Shopping', 'Brand', 'Performance']
+            statuses = ['active', 'paused', 'completed']
+            
+            campaigns = []
+            for i in range(100):  # Créer 100 campagnes
+                name = f"{random.choice(channels)} Campaign {i+1}"
+                cost = round(random.uniform(500, 5000), 2)
+                # ROI entre 50% et 300%
+                roi_multiplier = random.uniform(1.5, 4.0)
+                revenue = round(cost * roi_multiplier, 2)
+                conversions = int(revenue / random.uniform(20, 100))
+                status = random.choice(statuses)
+                channel = random.choice(channels)
+                campaign_type = random.choice(types)
+                
+                campaigns.append((name, cost, revenue, conversions, status, channel, campaign_type))
+            
+            cursor.executemany("""
+                INSERT INTO marketing_data (name, cost, revenue, conversions, status, channel, campaign_type) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, campaigns)
+            
+            connection.commit()
+            _logger.info(f"✅ Created {len(campaigns)} campaigns successfully!")
+            
+            cursor.close()
+            connection.close()
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Success!',
+                    'message': f'Created {len(campaigns)} random campaigns in ai_marketing database!',
+                    'type': 'success'
+                }
+            }
+            
+        except Exception as e:
+            error_msg = f"❌ Error populating database: {str(e)}"
+            _logger.error(error_msg)
+            
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Error',
+                    'message': error_msg,
                     'type': 'danger'
                 }
             }
