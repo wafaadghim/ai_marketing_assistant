@@ -12,7 +12,7 @@ class MarketingChatController(http.Controller):
             # Get AI service
             ai_service = request.env['ai.marketing.service']
             
-            # Generate response based on language and message
+            # Generate response based on actual database data
             response = ai_service.generate_chat_response(message, language)
             
             return {'response': response}
@@ -20,7 +20,7 @@ class MarketingChatController(http.Controller):
         except Exception as e:
             _logger.error(f"Chat error: {str(e)}")
             error_msg = {
-                'en': "I apologize, but I'm experiencing technical difficulties. Please try again later.",
-                'ar': "أعتذر، ولكنني أواجه صعوبات تقنية. يرجى المحاولة مرة أخرى لاحقاً."
+                'en': "I apologize, but I'm experiencing technical difficulties accessing the marketing data.",
+                'ar': "أعتذر، ولكنني أواجه صعوبات تقنية في الوصول لبيانات التسويق."
             }
             return {'response': error_msg.get(language, error_msg['en'])}

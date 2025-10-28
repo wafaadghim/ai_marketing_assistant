@@ -3,11 +3,10 @@
     'version': '1.0',
     'category': 'Marketing',
     'summary': 'AI-powered marketing assistant with chat functionality',
-    'description': """
-        AI Marketing Assistant provides intelligent insights and recommendations
-        for your marketing campaigns with an interactive chat interface.
-    """,
     'depends': ['base', 'web', 'utm'],
+    'external_dependencies': {
+        'python': ['psycopg2'],
+    },
     'data': [
         'security/ir.model.access.csv',
         'views/marketing_data_views.xml',
